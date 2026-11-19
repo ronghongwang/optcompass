@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: optcompass
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /healthz
+    envVars:
+      - key: FINMIND_TOKEN
+        sync: false

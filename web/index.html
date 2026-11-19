@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>期權羅盤｜台指選擇權籌碼分析</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 5l4 11-4 11-4-11z" fill="var(--accent)"/><circle cx="16" cy="16" r="2" fill="var(--bg)"/></svg>
+    <div><b>期權羅盤</b><small>台指選擇權籌碼分析</small></div>
+  </div>
+  <div class="controls">
+    <label class="sel"><span>合約</span><select id="contract"></select></label>
+    <div class="live" id="liveBox" title="即時報價狀態"><i class="dot"></i><span id="liveText">連線中…</span></div>
+    <button id="theme" class="icon" title="切換深淺色" aria-label="切換深淺色">◐</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="overview" class="on">總覽</button>
+  <button data-tab="chips">籌碼分佈</button>
+  <button data-tab="settle">結算試算</button>
+  <button data-tab="rent">收租試算</button>
+  <button data-tab="inst">法人動向</button>
+  <button data-tab="about">說明</button>
+</nav>
+
+<main id="main">
+  <div class="loading" id="loading">載入期交所資料中…（首次約需 10–20 秒）</div>
+
+  <section id="overview" class="tab on" hidden>
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <h2>多空結構尺 <small>支撐 ← 現價 → 壓力</small></h2>
+      <div id="ruler" class="ruler"></div>
+      <div class="legend" id="rulerLegend"></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>今日籌碼解讀 <small id="biasTag"></small></h2>
+        <ul id="insights" class="insights"></ul>
+        <p class="note">依公開未平倉數據以固定規則產生，僅為資料整理，非投資建議。</p>
+      </div>
+      <div class="card">
+        <h2>各合約未平倉 <small>點選切換</small></h2>
+        <div id="contractList" class="clist"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chips" class="tab" hidden>
+    <div class="card">
+      <div class="cardhead">
+        <h2>履約價籌碼分佈 <small id="chipsAsof"></small></h2>
+        <div class="seg" id="chipMode">
+          <button data-m="oi" class="on">未平倉</button>
+          <button data-m="doi">增減</button>
+          <button data-m="vol">成交量</button>
+        </div>
+        <div class="seg" id="chipRange">
+          <button data-r="25">近</button>
+          <button data-r="45" class="on">中</button>
+          <button data-r="400">全</button>
+        </div>
+      </div>
+      <div class="bfhead"><span class="p">Put 賣權（支撐）</span><span>履約價</span><span class="c">Call 買權（壓力）</span></div>
+      <div id="butterfly" class="butterfly"></div>
+    </div>
+    <div class="card">
+      <h2>T 字報價 <small id="tAsof"></small></h2>
+      <div class="tablewrap"><table id="ttable" class="ttable"></table></div>
+    </div>
+  </section>
+
+  <section id="settle" class="tab" hidden>
+    <div class="card">
+      <h2>結算情境：買方總獲利曲線 <small>最低點即「最大痛點」— 賣方賠付最少的結算價</small></h2>
+      <div id="painChart" class="chart"></div>
+      <div class="kpis small" id="settleKpis"></div>
+    </div>
+    <div class="card">
+      <h2>若結算在… <small>拖動試算賣方整體賠付</small></h2>
+      <input type="range" id="settleSlider" class="slider">
+      <div id="settleOut" class="settleout"></div>
+    </div>
+  </section>
+
+  <section id="rent" class="tab" hidden>
+    <div class="card">
+      <h2>收租試算 <small>賣出勒式 / 鐵兀鷹</small></h2>
+      <div class="form">
+        <label>賣出 Put 履約價<select id="rPut"></select></label>
+        <label>賣出 Call 履約價<select id="rCall"></select></label>
+        <label>保護翼（買進更外側）<select id="rWing">
+          <option value="0">不買保護（勒式）</option>
+          <option value="300">外 300 點</option>
+          <option value="500" selected>外 500 點</option>
+          <option value="1000">外 1000 點</option>
+        </select></label>
+        <label>口數<input id="rLots" type="number" min="1" max="999" value="1"></label>
+        <button id="rAuto" class="btn">套用籌碼牆</button>
+      </div>
+      <div class="kpis small" id="rentKpis"></div>
+      <div id="rentChart" class="chart"></div>
+      <p class="note" id="rentNote"></p>
+    </div>
+  </section>
+
+  <section id="inst" class="tab" hidden>
+    <div class="card">
+      <h2>外資台指期淨未平倉 <small>口數・近 30 個交易日・折線為期貨收盤</small></h2>
+      <div id="instFutChart" class="chart"></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>外資選擇權部位 <small>未平倉契約金額（百萬元）</small></h2><div id="instForeign"></div></div>
+      <div class="card"><h2>自營商選擇權部位 <small>未平倉契約金額（百萬元）</small></h2><div id="instDealer"></div></div>
+    </div>
+    <div class="card">
+      <h2>全市場 Put/Call 未平倉比 <small>&gt;100% 偏多、&lt;100% 偏空（台灣慣例）</small></h2>
+      <div id="pcChart" class="chart short"></div>
+    </div>
+  </section>
+
+  <section id="about" class="tab" hidden>
+    <div class="card prose">
+      <h2>這個系統在做什麼</h2>
+      <p>把臺灣期貨交易所公開的台指選擇權（TXO）未平倉、成交與三大法人資料，整理成一眼能讀的圖表，協助判斷主力看待的支撐與壓力區間。</p>
+      <h3>指標定義</h3>
+      <dl>
+        <dt>Call 牆 / Put 牆</dt><dd>該合約未平倉量最大的買權 / 賣權履約價。賣方通常是資金較大的一方，因此 Call 牆常被視為壓力、Put 牆視為支撐。</dd>
+        <dt>最大痛點（Max Pain）</dt><dd>讓所有買方合計獲利最少（賣方賠付最少）的結算價，以各履約價未平倉逐點計算。</dd>
+        <dt>預期波動</dt><dd>以價平跨式（ATM Call＋Put）權利金反推市場隱含的到期前一個標準差範圍：跨式價 ÷ 0.8。</dd>
+        <dt>區間內機率</dt><dd>以上述標準差假設常態分佈估算，僅供比較策略用，實際行情有肥尾風險。</dd>
+        <dt>增減</dt><dd>最新交易日與前一交易日未平倉量之差，代表新增或平倉的部位。</dd>
+      </dl>
+      <h3>資料來源與更新頻率</h3>
+      <ul>
+        <li>未平倉、三大法人：期交所每日盤後公布（經 FinMind 開放資料 API 取得），本系統每 30 分鐘檢查更新。</li>
+        <li>即時價量（日盤＋夜盤）：期交所行情資訊網，每 15 秒更新。即時未平倉交易所不提供，故 OI 為前一交易日盤後值。</li>
+      </ul>
+      <h3>風險聲明</h3>
+      <p>本系統僅彙整公開資料並以固定公式呈現，不構成任何投資建議、解盤或行情預測。選擇權賣方風險可能無限，請自行評估並以交易所公告資訊為準。</p>
+    </div>
+  </section>
+</main>
+
+<footer>資料來源：臺灣期貨交易所公開資料 · <span id="footAsof"></span> · 僅供研究，非投資建議</footer>
+<script src="app.js"></script>
+</body>
+</html>
